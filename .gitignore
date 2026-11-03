@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# OTS
+report.html
+screenshots/
+.vscode/
+.idea/
+.DS_Store
