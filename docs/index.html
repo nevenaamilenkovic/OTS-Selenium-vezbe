@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vežbaonica lokatora</title>
+<style>
+:root {
+  /* Raspored: traka sa alatima, kartica sa zadacima, pa forma i tabela jedna pored druge. */
+  --bg: #f3f5f2;
+  --kartica: #ffffff;
+  --polje-bg: #fbfcfb;
+  --tekst: #1c2420;
+  --tekst-blag: #56635b;
+  --linija: #d3d9d4;
+  --akcent: #1d6b59;
+  --akcent-tekst: #ffffff;
+  --dobro: #1c7a3b;
+  --upozorenje: #9a5600;
+  --greska: #b3261e;
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141a17; --kartica: #1c2420; --polje-bg: #151c18;
+    --tekst: #e5eae6; --tekst-blag: #9eada3; --linija: #34413a;
+    --akcent: #4fb596; --akcent-tekst: #0c1a14;
+    --dobro: #5cc47f; --upozorenje: #e0a24a; --greska: #f08278;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141a17; --kartica: #1c2420; --polje-bg: #151c18;
+  --tekst: #e5eae6; --tekst-blag: #9eada3; --linija: #34413a;
+  --akcent: #4fb596; --akcent-tekst: #0c1a14;
+  --dobro: #5cc47f; --upozorenje: #e0a24a; --greska: #f08278;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--tekst); font-family: var(--font); line-height: 1.5; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+:focus-visible { outline: 2px solid var(--akcent); outline-offset: 2px; }
+
+.traka { max-width: 1000px; margin: 0 auto; padding: 28px 16px 8px; display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-end; justify-content: space-between; }
+.traka h1 { font-size: 1.9rem; }
+.traka p { margin: 6px 0 0; color: var(--tekst-blag); max-width: 60ch; }
+.alati { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; }
+.alati label { display: flex; gap: 8px; align-items: center; font-size: .92rem; color: var(--tekst-blag); }
+
+.sadrzaj { max-width: 1000px; margin: 0 auto; padding: 16px 16px 48px; display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .sadrzaj { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } .puna { grid-column: 1 / -1; } }
+.omotac, .omotac-unutra { display: contents; }
+
+.kartica { background: var(--kartica); border: 1px solid var(--linija); border-radius: 10px; padding: 20px; }
+.kartica h2, .kartica h3 { font-size: 1.15rem; margin-bottom: 14px; }
+.zadaci ol { margin: 0; padding-left: 1.25rem; display: grid; gap: 4px; }
+.zadaci li::marker { color: var(--tekst-blag); font-variant-numeric: tabular-nums; }
+
+form { display: grid; gap: 14px; }
+.polje { display: grid; gap: 4px; }
+.polje label { display: grid; gap: 4px; font-weight: 600; font-size: .92rem; }
+.polje input[type="text"], .polje input[type="email"], .polje input[type="password"] {
+  width: 100%; padding: 9px 11px; border: 1px solid var(--linija); border-radius: 6px;
+  background: var(--polje-bg); color: var(--tekst); font: inherit; font-weight: 400;
+}
+.polje label.kvacica { display: flex; gap: 10px; align-items: center; font-weight: 400; }
+.dugmad { display: flex; flex-wrap: wrap; gap: 10px; }
+button, .dugme { font: inherit; cursor: pointer; }
+.dugme { padding: 9px 16px; border-radius: 6px; border: 1px solid var(--linija); background: var(--polje-bg); color: var(--tekst); }
+.dugme[type="submit"] { background: var(--akcent); border-color: var(--akcent); color: var(--akcent-tekst); font-weight: 600; }
+#mutiraj { padding: 9px 14px; border-radius: 6px; border: 1px solid var(--akcent); background: transparent; color: var(--akcent); font-weight: 600; }
+
+.rezultat { margin-top: 14px; padding: 10px 12px; border-radius: 6px; border-left: 4px solid var(--linija); background: var(--polje-bg); }
+.rezultat.uspeh { border-left-color: var(--dobro); }
+.rezultat.greska { border-left-color: var(--greska); }
+
+.tabela-okvir { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--linija); white-space: nowrap; }
+th { font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; color: var(--tekst-blag); }
+td a { color: var(--greska); }
+.napomena { margin: 12px 0 0; color: var(--tekst-blag); font-size: .9rem; }
+
+/* Mod za profesora: savet ispod svakog elementa sa zamkom */
+body.prof .polje[data-zamka] { --boja: var(--tekst-blag); }
+body.prof .polje[data-tip="dobro"] { --boja: var(--dobro); }
+body.prof .polje[data-tip="paznja"] { --boja: var(--upozorenje); }
+body.prof .polje[data-tip="zamka"] { --boja: var(--greska); }
+body.prof .polje[data-zamka]::after {
+  content: attr(data-zamka); display: block; margin-top: 2px; padding: 6px 10px; font-size: .82rem;
+  border-left: 4px solid var(--boja); border-radius: 4px; background: var(--polje-bg); color: var(--tekst);
+}
+.zamke-panel ul { margin: 0; padding-left: 1.2rem; display: grid; gap: 6px; }
+.zamke-panel code { font-family: var(--mono); font-size: .88em; }
+.podnozje { max-width: 1000px; margin: 0 auto; padding: 0 16px 32px; color: var(--tekst-blag); font-size: .88rem; }
+.podnozje code { font-family: var(--mono); }
+</style>
+</head>
+<body>
+<header class="traka">
+  <div>
+    <h1>Vežbaonica lokatora</h1>
+    <p>OTS 26/27, Termin 7. Cilj je da pronađete svaki element lokatorom koji ne puca kada se stranica promeni.</p>
+  </div>
+  <div class="alati" id="alati"></div>
+</header>
+
+<div class="sadrzaj" id="app"></div>
+
+<footer class="podnozje">
+  Stranica radi bez interneta. Otvorite fajl direktno u browseru. Druga verzija stranice se otvara sa <code>#v2</code> na kraju adrese.
+</footer>
+
+<script>
+(function () {
+  // Profesor: postavite na false pre deljenja sa studentima, pa se kontrola ne prikazuje.
+  var PRIKAZI_PROF_KONTROLU = false;
+
+  var ZAMKE = {
+    ime:     ["dobro",  "Ima jedinstven id=\"ime\", pa je By.ID prvi izbor."],
+    prezime: ["dobro",  "Nema ID-a, ali ima name=\"prezime\". Koristi By.NAME."],
+    email:   ["paznja", "Nema ni ID ni name. Koristi CSS: input[type='email'] ili [data-testid='email-polje']."],
+    lozinka: ["zamka",  "Oba polja za lozinku imaju id=\"lozinka\". By.ID uvek vraća prvo polje. Koristi name=\"lozinka\"."],
+    potvrda: ["zamka",  "Isti id kao polje iznad. Za ovo polje koristi name=\"potvrda\"."],
+    uslovi:  ["paznja", "Klasa se menja pri svakom crtanju stranice. Ne oslanjaj se na nju, koristi name=\"uslovi\"."],
+    dugmad:  ["zamka",  "Oba dugmeta imaju istu klasu \"dugme\" i nijedno nema ID. Razlikuju se po type ili po tekstu (XPath)."],
+    tabela:  ["zamka",  "Ćelije nemaju ni ID ni klase. Tekst \"Obriši\" se ponavlja u svakom redu, a ime \"Marko\" se javlja dva puta. Idi preko prezimena i susednih ćelija."]
+  };
+  var PREFIKS = { dobro: "Dobro. ", paznja: "Pažnja. ", zamka: "Zamka. " };
+
+  var verzija = 1;
+  try { if (/[?&]v=2|#v2/.test(location.search + location.hash)) { verzija = 2; } } catch (e) {}
+  var prof = false;
+  var poruka = null;
+  var polaznici = [
+    { ime: "Ana",    prezime: "Petrović",   status: "Prihvaćen",  grupa: "A" },
+    { ime: "Marko",  prezime: "Jovanović",  status: "Na čekanju", grupa: "B" },
+    { ime: "Jelena", prezime: "Nikolić",    status: "Prihvaćen",  grupa: "A" },
+    { ime: "Marko",  prezime: "Ilić",       status: "Na čekanju", grupa: "B" }
+  ];
+
+  function sufiks() { return Math.random().toString(36).slice(2, 6); }
+  function esc(t) {
+    var mapa = { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" };
+    return String(t).replace(/[&<>"]/g, function (c) { return mapa[c]; });
+  }
+  function polje(kljuc, unutra) {
+    return '<div class="polje" data-polje="' + kljuc + '">' + unutra + '</div>';
+  }
+  function porukaHtml() {
+    if (!poruka) { return ""; }
+    return '<div id="rezultat" class="rezultat ' + poruka.tip + '" role="alert">' + esc(poruka.tekst) + '</div>';
+  }
+
+  function zadaciHtml() {
+    return '<section class="kartica zadaci puna"><h2>Zadaci</h2><ol>' +
+      '<li>Upišite ime lokatorom By.ID.</li>' +
+      '<li>Upišite prezime lokatorom By.NAME.</li>' +
+      '<li>Upišite e-poštu CSS selektorom. Polje nema ni ID ni name.</li>' +
+      '<li>Upišite lozinku i njenu potvrdu. Pazite, nešto ovde nije kako treba.</li>' +
+      '<li>Označite uslove i pošaljite formu dugmetom čiji lokator ne zavisi od njegovog položaja.</li>' +
+      '<li>U tabeli obrišite polaznika Marko Ilić, a ne Marka Jovanovića.</li>' +
+      '<li>Pritisnite dugme za promenu verzije i pokrenite iste lokatore ponovo. Koji su pukli i zašto?</li>' +
+      '</ol></section>';
+  }
+
+  function formaHtml() {
+    var v2 = verzija === 2;
+    var dugmad = [
+      '<button type="submit" class="dugme dugme-' + sufiks() + '">Pošalji prijavu</button>',
+      '<button type="reset" class="dugme dugme-' + sufiks() + '">Otkaži</button>'
+    ];
+    if (v2) { dugmad.reverse(); }
+    var p = {
+      ime: polje("ime", '<label for="ime">Ime</label><input type="text" id="ime" name="ime" autocomplete="off">'),
+      prezime: polje("prezime", '<label>Prezime<input type="text" name="prezime" autocomplete="off"></label>'),
+      email: polje("email", '<label>E-pošta<input type="email" placeholder="ime@primer.rs" data-testid="email-polje" autocomplete="off"></label>'),
+      lozinka: polje("lozinka", '<label>Lozinka<input type="password" id="lozinka" name="lozinka" autocomplete="new-password"></label>'),
+      potvrda: polje("potvrda", '<label>Potvrda lozinke<input type="password" id="lozinka" name="potvrda" autocomplete="new-password"></label>'),
+      uslovi: polje("uslovi", '<label class="kvacica"><input type="checkbox" name="uslovi" class="chk-' + sufiks() + '"> Prihvatam uslove korišćenja</label>'),
+      dugmad: polje("dugmad", '<div class="dugmad">' + dugmad.join("") + '</div>')
+    };
+    var redosled = v2 ? ["prezime", "ime", "email", "lozinka", "potvrda", "uslovi", "dugmad"]
+                      : ["ime", "prezime", "email", "lozinka", "potvrda", "uslovi", "dugmad"];
+    var naslov = v2 ? "h3" : "h2";
+    var telo = '<section class="kartica"><' + naslov + '>Prijava na radionicu</' + naslov + '>' +
+      '<form id="prijava" novalidate>' + redosled.map(function (k) { return p[k]; }).join("") + '</form>' +
+      '<div id="rezultat-okvir">' + porukaHtml() + '</div></section>';
+    return v2 ? '<div class="omotac"><div class="omotac-unutra">' + telo + '</div></div>' : telo;
+  }
+
+  function redoviPrikaza() { return verzija === 1 ? polaznici.slice() : polaznici.slice().reverse(); }
+
+  function tabelaHtml() {
+    var v2 = verzija === 2;
+    var naslov = v2 ? "h3" : "h2";
+    var glava = '<th>Ime</th><th>Prezime</th>' + (v2 ? '<th>Grupa</th>' : '') + '<th>Status</th><th>Akcija</th>';
+    var redovi = redoviPrikaza().map(function (r) {
+      return '<tr><td>' + esc(r.ime) + '</td><td>' + esc(r.prezime) + '</td>' +
+        (v2 ? '<td>' + esc(r.grupa) + '</td>' : '') +
+        '<td>' + esc(r.status) + '</td><td><a href="#">Obriši</a></td></tr>';
+    }).join("");
+    var n = polaznici.length;
+    var rec = (n % 10 === 1 && n % 100 !== 11) ? "polaznik" : "polaznika";
+    return '<section class="kartica"><' + naslov + '>Polaznici</' + naslov + '>' +
+      polje("tabela", '<div class="tabela-okvir"><table id="polaznici"><thead><tr>' + glava + '</tr></thead><tbody>' + redovi + '</tbody></table></div>') +
+      '<p class="napomena" id="broj-polaznika">Ukupno: ' + n + ' ' + rec + '</p></section>';
+  }
+
+  function profPanelHtml() {
+    return '<section class="kartica zamke-panel puna" id="zamke-panel"><h2>Mod za profesora: šta je ovde skriveno</h2><ul>' +
+      '<li><strong>Dupli ID.</strong> Oba polja za lozinku imaju <code>id="lozinka"</code>.</li>' +
+      '<li><strong>Klase koje se menjaju.</strong> Klasa kvačice i dugmadi dobija novi sufiks pri svakom crtanju stranice.</li>' +
+      '<li><strong>Ista klasa.</strong> Oba dugmeta imaju klasu <code>dugme</code>.</li>' +
+      '<li><strong>Tabela bez oznaka.</strong> Ćelije nemaju ID ni klase, a tekst "Obriši" i ime "Marko" se ponavljaju.</li>' +
+      '<li><strong>Verzija 2 menja:</strong> redosled polja Ime i Prezime, redosled dugmadi i redova u tabeli, dodaje kolonu Grupa, menja nivo naslova i dodaje omotače oko forme. Apsolutni XPath, <code>nth-of-type</code>, brojanje kolona i klase puknu.</li>' +
+      '<li><strong>Verzija 2 ne menja:</strong> ID <code>ime</code>, atribute <code>name</code>, <code>type</code> i <code>data-testid</code>, kao ni tekst dugmadi. To su stabilni lokatori.</li>' +
+      '</ul></section>';
+  }
+
+  function primeniProf() {
+    document.body.classList.toggle("prof", prof);
+    Array.prototype.forEach.call(document.querySelectorAll(".polje[data-polje]"), function (el) {
+      var z = ZAMKE[el.getAttribute("data-polje")];
+      if (prof && z) {
+        el.setAttribute("data-tip", z[0]);
+        el.setAttribute("data-zamka", PREFIKS[z[0]] + z[1]);
+      } else {
+        el.removeAttribute("data-tip");
+        el.removeAttribute("data-zamka");
+      }
+    });
+  }
+
+  function render() {
+    document.getElementById("app").innerHTML =
+      zadaciHtml() + formaHtml() + tabelaHtml() + (prof ? profPanelHtml() : "");
+    primeniProf();
+    var dugme = document.getElementById("mutiraj");
+    if (dugme) { dugme.textContent = "Verzija stranice: " + verzija; }
+  }
+
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    if (t.id === "mutiraj") {
+      verzija = verzija === 1 ? 2 : 1;
+      poruka = null;
+      render();
+      return;
+    }
+    var a = t.closest ? t.closest("a") : null;
+    if (a && a.closest("#polaznici")) {
+      e.preventDefault();
+      var tr = a.closest("tr");
+      var idx = Array.prototype.indexOf.call(tr.parentNode.children, tr);
+      var obrisan = redoviPrikaza()[idx];
+      polaznici.splice(polaznici.indexOf(obrisan), 1);
+      poruka = null;
+      render();
+    }
+  });
+
+  document.addEventListener("change", function (e) {
+    if (e.target.id === "prof-mod") { prof = e.target.checked; render(); }
+  });
+
+  document.addEventListener("submit", function (e) {
+    var f = e.target;
+    if (f.id !== "prijava") { return; }
+    e.preventDefault();
+    function vrednost(sel) { var el = f.querySelector(sel); return el ? el.value.trim() : ""; }
+    var ime = vrednost('[name="ime"]');
+    var prezime = vrednost('[name="prezime"]');
+    var email = vrednost('[data-testid="email-polje"]');
+    var lozinka = vrednost('[name="lozinka"]');
+    var potvrda = vrednost('[name="potvrda"]');
+    var uslovi = f.querySelector('[name="uslovi"]').checked;
+    var greska = null;
+    if (!ime) { greska = "Ime je obavezno."; }
+    else if (!prezime) { greska = "Prezime je obavezno."; }
+    else if (email.indexOf("@") < 1) { greska = "Unesite ispravnu e-poštu."; }
+    else if (lozinka.length < 6) { greska = "Lozinka mora imati najmanje 6 znakova."; }
+    else if (lozinka !== potvrda) { greska = "Lozinke se ne poklapaju."; }
+    else if (!uslovi) { greska = "Morate prihvatiti uslove korišćenja."; }
+    if (greska) {
+      poruka = { tip: "greska", tekst: greska };
+      document.getElementById("rezultat-okvir").innerHTML = porukaHtml();
+      return;
+    }
+    polaznici.push({ ime: ime, prezime: prezime, status: "Na čekanju", grupa: "A" });
+    poruka = { tip: "uspeh", tekst: "Prijava primljena: " + ime + " " + prezime + "." };
+    render();
+  });
+
+  document.addEventListener("reset", function (e) {
+    if (e.target.id === "prijava") {
+      poruka = null;
+      document.getElementById("rezultat-okvir").innerHTML = "";
+    }
+  });
+
+  window.addEventListener("hashchange", function () {
+    var h = location.hash;
+    if (h === "#v1" || h === "#v2") { verzija = h === "#v2" ? 2 : 1; poruka = null; render(); }
+  });
+
+  document.getElementById("alati").innerHTML =
+    '<button type="button" id="mutiraj">Verzija stranice: ' + verzija + '</button>' +
+    (PRIKAZI_PROF_KONTROLU ? '<label><input type="checkbox" id="prof-mod"> Mod za profesora</label>' : '');
+  render();
+})();
+</script>
+</body>
+</html>
